@@ -25,27 +25,21 @@ class GlobalAggregator(nn.Module):
             batch_size (int): batch size
             masks (None): None
             neighbor_weight (Tensor): hop item weighting
-            extra_vector (Tensor, optional):  equ(12). Defaults to None.
+            extra_vector (Tensor, optional): Defaults to None.
         Returns:
             output (Tensor): global embedding
         """
         if extra_vector is not None:
-            # compute pi: equ(2)
             alpha = torch.matmul(torch.cat([extra_vector.unsqueeze(2).repeat(1, 1, neighbor_vector.shape[2], 1)*neighbor_vector, neighbor_weight.unsqueeze(-1)], -1), self.w_1).squeeze(-1)
             alpha = F.leaky_relu(alpha, negative_slope=0.2)
             alpha = torch.matmul(alpha, self.w_2).squeeze(-1)
-            # equ(4)
             alpha = torch.softmax(alpha, -1).unsqueeze(-1)
-            # equ(1)
             neighbor_vector = torch.sum(alpha * neighbor_vector, dim=-2)
         else:
-            # equ(3)
             neighbor_vector = torch.mean(neighbor_vector, dim=2)
-        # self_vectors = F.dropout(self_vectors, 0.5, training=self.training)
-        # equ(6)
+
         output = torch.cat([self_vectors, neighbor_vector], -1)
         output = F.dropout(output, self.dropout, training=self.training)
-        # equ(5)
         output = torch.matmul(output, self.w_3)
         output = output.view(batch_size, -1, self.dim)
         output = self.act(output)

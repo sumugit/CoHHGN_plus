@@ -46,7 +46,7 @@ def make_relation_graph(seq):
         # nearby 4 items (varepsilon = 4)
         for k in range(1, 4):
             for j in range(len(data)-k):
-                relation.append([data[j]-1, data[j+k]-1]) # item_id - 1 にする
+                relation.append([data[j]-1, data[j+k]-1]) # item_id - 1
                 relation.append([data[j+k]-1, data[j]-1])
     # adj1
     for tup in relation:
@@ -62,7 +62,7 @@ def make_relation_graph(seq):
         # value (number of co-occurance) descent sort
         x = [v for v in sorted(adj1[i].items(), reverse=True, key=lambda x: x[1])]
         adj[i] = [v[0] for v in x] # same session item
-        weight[i] = [v[1] for v in x] # number of co-occurance, w_{ij} in equ(2)
+        weight[i] = [v[1] for v in x] # number of co-occurance
 
     # filter same session item
     for i in range(num):

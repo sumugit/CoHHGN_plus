@@ -1,7 +1,6 @@
 '''
-
-creat by kun at Oct 2021
-Reference: https://github.com/xiaxin1998/DHCN
+creat by yuta at August 2023
+Reference: https://github.com/sumugit/CoHHGN_plus
 '''
 
 import sys
@@ -30,10 +29,9 @@ parser.add_argument('--embSize', type=int, default=128, help='embedding size')
 parser.add_argument('--num_heads', type=int, default=4, help='number of attention heads') # 4
 parser.add_argument('--l2', type=float, default=1e-5, help='l2 penalty')
 parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
-parser.add_argument('--layer', type=float, default=3, help='the number of layer used, 2 for amazon, 3 for others') # 3 が精度高い
+parser.add_argument('--layer', type=float, default=3, help='the number of layer used, 2 for amazon, 3 for others')
 parser.add_argument('--beta', type=float, default=0.01, help='ssl task maginitude')
 parser.add_argument('--model', default=None, help='load pretrained model')
-# parser.add_argument('--filter', type=bool, default=False, help='filter incidence matrix') # 削除
 # Global Graph
 parser.add_argument('--activate', type=str, default='relu')
 parser.add_argument('--n_sample_all', type=int, default=12)
@@ -52,11 +50,8 @@ print(opt)
 torch.cuda.set_device(cf.cuda)
 
 def torch_fix_seed(seed=cf.SEED):
-    # Python random
     random.seed(seed)
-    # Numpy
     np.random.seed(seed)
-    # Pytorch
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
@@ -114,51 +109,43 @@ def main():
     item_adj, item_num = handle_adj(item_adj, n_node, opt.n_sample_all, item_num)  # sample co-occurance items from each item-node
     pri_adj, pri_num = handle_adj(pri_adj, n_price, opt.n_sample_all, pri_num)
     
-    if opt.model:
-        print('load pretrain model!')
-        model = torch.load(opt.model)
-        with open(os.path.join(cf.JSON2, 'key_node.json')) as f:
-            label_dict = json.load(f)
-        test(model, test_data, label_dict)
-        exit()
-    else:
-        model = trans_to_cuda(CoHHGN_plus(
-                            adjacency = train_data.adjacency,
-                            adjacency_pv = train_data.adjacency_pv,
-                            adjacency_vp = train_data.adjacency_vp,
-                            adjacency_pcb = train_data.adjacency_pcb,
-                            adjacency_cbp = train_data.adjacency_cbp,
-                            adjacency_cbv = train_data.adjacency_cbv,
-                            adjacency_vcb = train_data.adjacency_vcb,
-                            adjacency_pcm = train_data.adjacency_pcm,
-                            adjacency_cmp = train_data.adjacency_cmp,
-                            adjacency_cmv = train_data.adjacency_cmv,
-                            adjacency_vcm = train_data.adjacency_vcm,
-                            adjacency_cbcm = train_data.adjacency_cbcm,
-                            adjacency_cmcb = train_data.adjacency_cmcb,
-                            n_node = n_node,
-                            n_price = n_price,
-                            n_categoryBig = n_categoryBig,
-                            n_categoryMiddle = n_categoryMiddle,
-                            n_gender = n_gender,
-                            n_region = n_region,
-                            item_adj = item_adj,
-                            pri_adj = pri_adj,
-                            item_num = item_num,
-                            pri_num = pri_num,
-                            lr = opt.lr,
-                            l2 = opt.l2,
-                            beta = opt.beta,
-                            layers = opt.layer,
-                            emb_size = opt.embSize,
-                            batch_size = opt.batchSize,
-                            dataset = opt.dataset,
-                            num_heads = opt.num_heads,
-                            hop = opt.hop,
-                            activate = opt.activate,
-                            dropout_gcn = opt.dropout_gcn,
-                            dropout_global = opt.dropout_global,
-                            n_sample = opt.n_sample))
+    model = trans_to_cuda(CoHHGN_plus(
+                        adjacency = train_data.adjacency,
+                        adjacency_pv = train_data.adjacency_pv,
+                        adjacency_vp = train_data.adjacency_vp,
+                        adjacency_pcb = train_data.adjacency_pcb,
+                        adjacency_cbp = train_data.adjacency_cbp,
+                        adjacency_cbv = train_data.adjacency_cbv,
+                        adjacency_vcb = train_data.adjacency_vcb,
+                        adjacency_pcm = train_data.adjacency_pcm,
+                        adjacency_cmp = train_data.adjacency_cmp,
+                        adjacency_cmv = train_data.adjacency_cmv,
+                        adjacency_vcm = train_data.adjacency_vcm,
+                        adjacency_cbcm = train_data.adjacency_cbcm,
+                        adjacency_cmcb = train_data.adjacency_cmcb,
+                        n_node = n_node,
+                        n_price = n_price,
+                        n_categoryBig = n_categoryBig,
+                        n_categoryMiddle = n_categoryMiddle,
+                        n_gender = n_gender,
+                        n_region = n_region,
+                        item_adj = item_adj,
+                        pri_adj = pri_adj,
+                        item_num = item_num,
+                        pri_num = pri_num,
+                        lr = opt.lr,
+                        l2 = opt.l2,
+                        beta = opt.beta,
+                        layers = opt.layer,
+                        emb_size = opt.embSize,
+                        batch_size = opt.batchSize,
+                        dataset = opt.dataset,
+                        num_heads = opt.num_heads,
+                        hop = opt.hop,
+                        activate = opt.activate,
+                        dropout_gcn = opt.dropout_gcn,
+                        dropout_global = opt.dropout_global,
+                        n_sample = opt.n_sample))
 
     top_K = [1, 5, 10, 20]
     best_results = {}
@@ -195,10 +182,6 @@ def main():
             best_results['epoch5'][2], best_results['epoch10'][0], best_results['epoch10'][1],
             best_results['epoch10'][2], best_results['epoch20'][0], best_results['epoch20'][1],
             best_results['epoch20'][2]))
-        # save model
-        if epoch == 4:
-            torch.save(model, '/workspace/sources/model/proposal_weight.pth')
 
 if __name__ == '__main__':
-    # torch_fix_seed()
     main()

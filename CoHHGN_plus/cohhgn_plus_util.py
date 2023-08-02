@@ -1,15 +1,13 @@
 import numpy as np
-# np.random.seed(42)
 from scipy.sparse import csr_matrix
 from operator import itemgetter
 import torch
 
 def data_masks(all_sessions, n_node):
     # same as preprocess
-    # Heterogeneous Hypergraph の接続行列作成
-    # csr_matrix (圧縮疎行列) の形式で扱う
-    # indptr: 行の index, indices: 列の index, data: hyperedge に含まれれば 1
-    # 行列のサイズ : (unique item1 num, unique item2 num)
+    # create connection matrix
+    # in the form of csr_matrix (compressed sparse matrix)
+    # size : (unique item1 num, unique item2 num)
     indptr, indices, data = [], [], []
     indptr.append(0)
     for j in range(len(all_sessions)):
@@ -17,12 +15,9 @@ def data_masks(all_sessions, n_node):
         session = np.unique(all_sessions[j]) # unique item/priceLevel/categoryBig/categoryMiddle
         length = len(session)
         s = indptr[-1]
-        # 1 行にユニークアイテム数分の要素と位置が記録される
         indptr.append((s + length))
         for i in range(length):
-            # 列はアイテムの index
-            indices.append(session[i]-1) # item_id - 1 が index
-            # hyperedge (アイテムの種類数分ある) に含まれるので 1
+            indices.append(session[i]-1) # index = item_id - 1
             data.append(1)
     # indptr:sum of the session length; indices:item_id - 1
     # Compressed sparce matrix
@@ -60,7 +55,7 @@ def handle_adj(adj_list, n_entity, sample_num, num_list=None):
     Returns: np.array, np.array
         adj_entity, num_entity: sampled adj_list, num_list
     """
-    adj_entity = np.zeros([n_entity+1, sample_num], dtype=np.int64) # n_node + 1 にすること注意
+    adj_entity = np.zeros([n_entity+1, sample_num], dtype=np.int64) # n_node + 1
     num_entity = np.zeros([n_entity+1, sample_num], dtype=np.int64)
     for entity in range(n_entity):
         # idx 0 is skipped
@@ -73,7 +68,7 @@ def handle_adj(adj_list, n_entity, sample_num, num_list=None):
             sampled_indices = np.random.choice(list(range(n_neighbor)), size=sample_num, replace=False)
         else:
             sampled_indices = np.random.choice(list(range(n_neighbor)), size=sample_num, replace=True)
-        # row=0 はダミー (padding 用)
+        # row=0 is dummy (for padding)
         adj_entity[entity+1] = np.array([neighbor[i] for i in sampled_indices])
         num_entity[entity+1] = np.array([neighbor_weight[i] for i in sampled_indices])
 
@@ -85,19 +80,13 @@ class Data():
                  n_categoryMiddle=None, n_gender=None, n_region=None):
         self.raw = data[0]         # tr_seqs to np.array() (sessions, item_seq)
         self.price_raw = data[1]   # tr_pri to np.array()  (sessions, price_seq)
-        # 各アイテム間のセッションに基づく関連性を表す正方行列 DHBH_T を作成
         H_T = data_easy_masks(data[2], len(data[0]), n_node) # csr_matrix (sessions, items)
-        # 行毎に正規化
         BH_T = H_T.T.multiply(1.0 / H_T.sum(axis=1).reshape(1, -1)) # csr_matrix (items, sessions)
         BH_T = BH_T.T # csr_matrix (sessions, items)
-        ########################################
         H = H_T.T # csr_matrix (items, sessions)
-        # 行毎に正規化
         DH = H.T.multiply(1.0 / H.sum(axis=1).reshape(1, -1)) # csr_matrix (sessions, items)
         DH = DH.T # csr_matrix (items, sessions)
         DHBH_T = np.dot(DH, BH_T) # np.array (items, items)
-        ########################################
-        # それ以外の接続行列は attention-score の非ゼロ要素のみを抽出するのに用いる
         # priceLevel_item matrix
         H_pv = data_easy_masks(data[4], n_price, n_node)
         BH_pv = H_pv
@@ -105,7 +94,7 @@ class Data():
         # priceLevel_categoryBig matrix
         H_pcb = data_easy_masks(data[5], n_price, n_categoryBig)
         BH_pcb = H_pcb
-        BH_cbp = H_pcb.T
+        BH_cbp = H_pcb.Tf
         # categoryBig_item matrix
         H_cbv = data_easy_masks(data[6], n_categoryBig, n_node)
         BH_cbv = H_cbv
@@ -122,7 +111,7 @@ class Data():
         H_cbcm = data_easy_masks(data[9], n_categoryBig, n_categoryMiddle)
         BH_cbcm = H_cbcm
         BH_cmcb = H_cbcm.T
-        # adjacency matrix (セッション内でのアイテム間の関連性を表した行列)
+        # adjacency matrix
         self.adjacency = DHBH_T.tocoo()
         # priceLevel-item
         self.adjacency_pv = BH_pv.tocoo()
@@ -160,26 +149,8 @@ class Data():
         self.length = len(self.raw)           # session length
         self.shuffle = shuffle
 
-    def get_overlap(self, sessions):
-        # 未使用
-        matrix = np.zeros((len(sessions), len(sessions)))
-        for i in range(len(sessions)):
-            seq_a = set(sessions[i])
-            seq_a.discard(0)
-            for j in range(i+1, len(sessions)):
-                seq_b = set(sessions[j])
-                seq_b.discard(0)
-                overlap = seq_a.intersection(seq_b)
-                ab_set = seq_a | seq_b
-                matrix[i][j] = float(len(overlap))/float(len(ab_set))
-                matrix[j][i] = matrix[i][j]
-        matrix = matrix + np.diag([1.0]*len(sessions))
-        degree = np.sum(np.array(matrix), 1)
-        degree = np.diag(1.0/degree)
-        return matrix, degree
-
     def generate_batch(self, batch_size):
-        """batch 毎の index を返す
+        """Returns an index for each batch
         """
         if self.shuffle:
             shuffled_arg = np.arange(self.length)
@@ -202,7 +173,7 @@ class Data():
         return slices
 
     def get_slice(self, index):
-        # padding (GCE-GNN と同じ)
+        # padding (same as GCE-GNN)
         items, num_node, price_seqs = [], [], []
         inp = [self.raw[idx] for idx in index] # self.raw[index]
         inp_price = [self.price_raw[idx] for idx in index] # self.price_raw[index]

@@ -10,7 +10,7 @@ sys.path.append("/workspace/sources")
 from config.config import Config
 cf = Config()
 
-# the number of price levels (\rho in equ(1))
+# the number of price levels
 price_level_num = 9
 data_all = pd.read_csv(cf.processed_path)
 data_all = data_all[['session_id', 'week', 'period', 'super_sale', 'run_sale', 'user_gender', 'user_region', 'price', 'genre_1', 'genre_2', 'genre_3']]
@@ -278,11 +278,7 @@ for _, row in data.iterrows():
         gender_all[sess_id] = gender
         region_all[sess_id] = region
 
-# sess_total = data['sessionID'].max()
 sess_split = data[data['time'] == 102]['sessionID'].iloc[0]
-
-
-# split_num = int(sess_total / 10 * 9) # train test split 9:1
 
 tra_sess = dict()  # dict(session_id:[item_id,item_id,...])
 tes_sess = dict()
@@ -303,7 +299,6 @@ tes_gender = dict()
 tra_region = dict()  # dict(session_id:[region,region,...])
 tes_region = dict()
 for sess_temp in sess_all.keys():
-    # 各セッションの item, price, category
     all_seqs = sess_all[sess_temp]
     all_price = price_all[sess_temp]
     all_cateBig = cateBig_all[sess_temp]
@@ -363,7 +358,6 @@ region_dict = {}
 
 # tra_sess tra_price tra_cate
 # Convert training sessions to sequences and renumber items to start from 1
-# SR-GNN と同じ (各dict の value を list にまとめる)
 def obtian_tra():
     train_seqs = []
     train_price = []
@@ -421,7 +415,7 @@ def obtian_tra():
                 cateMiddle_outseq += [cateMiddle_ctr]
                 cateMiddle_dict[int(cm)] = cateMiddle_ctr
                 cateMiddle_ctr += 1
-        # super_sale, run_sale, gender, region はスカラー
+        # super_sale, run_sale, gender, region are scalar values
         if super_sale in super_sale_dict:
             new_super_sale = super_sale_dict[super_sale]
         else:
@@ -575,7 +569,7 @@ print('train categoryBig: ', tr_catb[:5])
 print('train categoryMiddle: ', tr_catm[:5])
 print('train lab: ', tr_labs[:5])
 
-# Heterogeneous Hypergraph の接続行列作成の準備
+# Heterogeneous Hypergraph's connecoion matrix
 def tomatrix(all_seqs, all_pri, all_cateBig, all_cateMiddle):
     price_item_dict = {} # dict(priceLevel:[item, item,...]) value: unique
     price_item = [] # dict values
@@ -633,10 +627,10 @@ def tomatrix(all_seqs, all_pri, all_cateBig, all_cateMiddle):
 
 
 def data_masks(all_sessions):
-    # Heterogeneous Hypergraph の接続行列作成
-    # csr_matrix (圧縮疎行列) の形式で扱う
-    # indptr: 行の index, indices: 列の index, data: hyperedge に含まれれば 1
-    # 行列のサイズ : (unique item1 num, unique item2 num)
+    # same as preprocess
+    # create connection matrix
+    # in the form of csr_matrix (compressed sparse matrix)
+    # size : (unique item1 num, unique item2 num)
     indptr, indices, data = [], [], []
     indptr.append(0)
     for j in range(len(all_sessions)):
@@ -644,18 +638,15 @@ def data_masks(all_sessions):
         session = np.unique(all_sessions[j]) # unique item/priceLevel/categoryBig/categoryMiddle
         length = len(session)
         s = indptr[-1]
-        # 1 行にユニークアイテム数分の要素と位置が記録される
         indptr.append((s + length))
         for i in range(length):
-            # 列はアイテムの index
-            indices.append(session[i]-1) # item_id - 1 が index
-            # hyperedge (アイテムの種類数分ある) に含まれるので 1
+            indices.append(session[i]-1) # item_id - 1
+            # indptr:sum of the session length; indices:item_id - 1
             data.append(1)
         results = (data, indices, indptr)
     return results
 
-# Heterogeneous Hypergraph の接続行列は train, test 全てのデータから作成する
-# tra_pi, tra_pcb, tra_cbi, tra_pcm, tra_cmi, tra_cbcm = tomatrix(tra_seqs + tes_seqs, tra_pri + tes_pri, tra_catb + tes_catb, tra_catm + tes_catm)
+
 tra_pi, tra_pcb, tra_cbi, tra_pcm, tra_cmi, tra_cbcm = tomatrix(tra_seqs, tra_pri, tra_catb, tra_catm)
 # concat
 tra = (
@@ -678,9 +669,9 @@ print('sequence average length: ', all / (len(tra_seqs) + len(tes_seqs) * 1.0)) 
 
 pickle.dump(tra, open(cf.train_path, 'wb'))
 pickle.dump(tes, open(cf.test_path, 'wb'))
-pickle.dump(tra_seqs, open(cf.all_train_seq_path, 'wb')) # global graph の構築で必要
+pickle.dump(tra_seqs, open(cf.all_train_seq_path, 'wb')) # used in global graph
 pickle.dump(tes_seqs, open(cf.all_test_seq_path, 'wb'))
-pickle.dump(tra_pri, open(cf.all_train_price_seq_path, 'wb')) # global graph の構築で必要
+pickle.dump(tra_pri, open(cf.all_train_price_seq_path, 'wb')) # used in global graph
 pickle.dump(tes_pri, open(cf.all_test_price_seq_path, 'wb'))
 print("dataset: ", cf.age_range)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
