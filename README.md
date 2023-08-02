@@ -6,7 +6,7 @@ Yuta Sumiya, Ryusei Numata, Satoshi Takahashi
 
 _at DS, 2023_
 
-## Environments:
+## Environments
 - Python 3.9
 - Pytorch 1.13.1
 - Numpy 1.24.1
@@ -16,7 +16,7 @@ The data used in this study was provided by the sponsors of the Data Analysis Co
 
 By using any observed browsing and purchase history data that includes criteria such as the user's gender and location, you can conduct similar experiments to evaluate pseudo-session behaviors.
 
-## Usage:
+## Usage
 
 Data preprocessing:
 
@@ -38,7 +38,7 @@ Train and evaluate the model:
 CoHHGN_plus$ python3 cohhgn_plus_main.py --dataset datasetname
 ~~~~
 
-## Citation:
+## Citation
 Please cite our paper if you use our codes. Thanks!
 ```
 @inproceedings{CoHHGN_plus,
