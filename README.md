@@ -1,6 +1,6 @@
 This is our implementation for the paper:
 
-_Pseudo Session-based Recommendation with Hierarchical Embedding and Session Attributes_ 
+_Pseudo Session-based Recommendation with Hierarchical Embedding and Session Attributes [[arXiv link](https://arxiv.org/abs/2306.10029)]_ 
 
 Yuta Sumiya, Ryusei Numata, Satoshi Takahashi
 
@@ -61,5 +61,5 @@ In case that you have any difficulty about the implementation or you are interes
 
 Author: Yuta Sumiya (sumiya@uec.ac.jp / diddy2983@gmail.com)
 
-Also, welcome to visit my academic homepage:
+Also, welcome to visit my academic homepage: https://yusumi.github.io
 
