@@ -61,5 +61,4 @@ In case that you have any difficulty about the implementation or you are interes
 
 Author: Yuta Sumiya (sumiya@uec.ac.jp / diddy2983@gmail.com)
 
-Also, welcome to visit my academic homepage: https://yusumi.github.io
-
+Also, welcome to visit my academic homepage: https://sumugit.github.io
