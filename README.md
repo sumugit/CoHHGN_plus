@@ -41,19 +41,22 @@ CoHHGN_plus$ python3 cohhgn_plus_main.py --dataset datasetname
 ## Citation
 Please cite our paper if you use our codes. Thanks!
 ```
-@inproceedings{CoHHGN_plus,
-  author    = {Yuta Sumiya and
-               Ryusei Numata and
-               Satoshi Takahashi and
-               },           
-  title     = {Pseudo Session-based Recommendation with Hierarchical Embedding and Session Attributes},         
-  booktitle = {{DS} '23: 26th International Conference on Discovery Science, Porto, Portugal, October 9-11, 2023},          
-  pages     = {},
-  year      = {2023},
-  crossref  = {DBLP:conf/DS/2023},
-  url       = {},
-  doi       = {},
-  biburl    = {}
+@InProceedings{CoHHGN_plus,
+author="Sumiya, Yuta
+and Numata, Ryusei
+and Takahashi, Satoshi",
+editor="Bifet, Albert
+and Lorena, Ana Carolina
+and Ribeiro, Rita P.
+and Gama, Jo{\~a}o
+and Abreu, Pedro H.",
+title="Pseudo Session-Based Recommendation with Hierarchical Embedding and Session Attributes",
+booktitle="Discovery Science",
+year="2023",
+publisher="Springer Nature Switzerland",
+address="Cham",
+pages="582--596",
+isbn="978-3-031-45275-8"
 }
 ```
 
